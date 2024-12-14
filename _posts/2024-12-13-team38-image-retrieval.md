@@ -2,7 +2,7 @@
 layout: post
 comments: true
 title: Image Retrieval
-author: Vikram Chilkunda, Azad, Aral
+author: Vikram Chilkunda, Aral Muftuoglu, Azad Azargushasb
 date: 2024-01-01
 ---
 
@@ -16,7 +16,7 @@ date: 2024-01-01
 {:toc}
 # Content-Based Image Retrieval: A Deep Dive
 
-**Authors: Aral, Azad, Vikram**
+**Authors: Aral Muftuoglu, Azad Azargushasb, Vikram Chilkunda**
 
 ---
 
@@ -354,7 +354,52 @@ Key findings include:
 </div>
 
 
+## Beyond Images: Feature Extraction in Genomics
 
+While we've focused on image retrieval, the concepts of feature extraction and similarity search can be applied to many other domains. Here, we demonstrate an interesting application in genomics using the same fundamental principles. You can find our implementation in [Google Colab](https://colab.research.google.com/drive/1aBUVJpJSDyOnIqkZt4nwkAKrSr8-1sr3?usp=sharing).
+
+Just as CNNs can extract meaningful features from images, we can use specialized models like DNABERT-2 to extract features from DNA sequences. Here's our implementation of a DNA sequence similarity search:
+
+```python
+def mystery_function(read):
+    # Convert DNA sequence to numerical representation
+    inputs = tokenizer([read], return_tensors='pt', padding=True)["input_ids"]
+    
+    # Get sequence embeddings from DNABERT-2
+    hidden_states = model(inputs)[0]
+    
+    # Create a single vector representation via mean pooling
+    read_representation = torch.mean(hidden_states, dim=1)
+    
+    # Calculate similarity with database sequences
+    similarities = cosine_similarity(read_representation.detach().numpy(), 
+                                  embedding_mean.detach().numpy())
+    
+    # Find and return top 5 most similar sequences
+    top_indices = similarities.argsort()[0][-5:][::-1]
+    for index in top_indices:
+        print(dna_sequence_list[index], "similarity score:", similarities[0][index])
+```
+
+When we query this system with a DNA sequence 'ACAGCTCTCCCC', we get results like:
+
+```
+CGGCTAGGGATCGAACTCCGCGCGAGTGCC similarity score: 0.9912246
+TCTGTGTTTGTTGAGTCTCCTGAGACTCCC similarity score: 0.98853076
+TTAAACAGGTGGGTTCTATAGGTCTTACAT similarity score: 0.9881238
+TGCCCCGGTGTAGAACGATCCGTGCACGCG similarity score: 0.98796815
+CAGGTTAGACGGAGGTGCCGGTTTCCAGGG similarity score: 0.98769104
+```
+
+This demonstrates several interesting parallels with image retrieval:
+
+1. **Feature Extraction**: Just as CNNs extract features from images, DNABERT-2 extracts features from DNA sequences by converting them into high-dimensional vectors (embeddings).
+
+2. **Similarity Metrics**: We use cosine similarity to compare DNA sequence embeddings, similar to how we compare image feature vectors in CBIR systems.
+
+3. **Nearest Neighbor Search**: The system returns the most similar sequences from a database, analogous to how image retrieval systems return visually similar images.
+
+The high similarity scores (all above 0.97) suggest that our model captures meaningful patterns in the DNA sequences, allowing us to find similar genetic patterns just as we find similar visual patterns in images.
 
 
 ## Reference

@@ -69,14 +69,156 @@ The top-\(k\) images with the highest similarity scores are returned as results,
 ## Approaches to Image Retrieval
 CBIR systems utilize various strategies to identify similar images:
 
-### 1. Feature Extraction with CNNs
+## 1. Basic Feature Extraction with CNNs
 - **Process:** Convolutional Neural Networks (CNNs) extract deep features like edges, textures, shapes, and spatial patterns.
 - **Feature Vectors:** High-dimensional vectors (e.g., 512 or 1024 dimensions) are generated from intermediate CNN layers to represent an image.
-
 **Example Feature Vector from ResNet-18:**
 ```python
 [0.45, -0.12, 0.34, ..., 0.89]  # Image 1 (dog)
 [0.47, -0.10, 0.31, ..., 0.87]  # Image 2 (dog)
+```
+
+## 2: LoFTR: Detector-Free Local Feature Matching with Transformers
+
+---
+
+### Motivation  
+LoFTR introduces a new approach to **image feature detection** to address challenges faced by traditional methods, such as:  
+- Poor repeatability in **low-texture areas**.  
+- Errors in **repetitive patterns**.  
+- Variations in **viewpoint and lighting**.  
+
+LoFTR utilizes a **detector-free dense matching pipeline with Transformers**, diverging from traditional local feature-matching methods that rely on sequential steps: **feature detection, description, and matching**.  
+Instead, LoFTR:  
+1. Produces **dense matches** in regions where traditional feature detectors struggle.  
+2. Refines these matches at the coarse dense level to resolve ambiguities.
+
+---
+
+### Techniques  
+The researchers trained two specific models for different environments:  
+- **Indoor Model**: Trained on the **ScanNet** dataset.  
+- **Outdoor Model**: Trained on the **MegaDepth** public dataset.
+
+---
+
+### Architecture  
+The LoFTR architecture comprises **four key components** to achieve robust local feature matching:  
+
+1. **Feature Extraction Backbone**:  
+   - Uses a standard **Convolutional Neural Network (CNN)** to extract **multi-level features** from input images.  
+   - Generates **coarse-level** and **fine-level features**.  
+   - **Downsampling** in CNN reduces input length, lowering computational costs.  
+
+2. **Coarse-Level Feature Transformation**:  
+   - Reshapes features into **1D vectors** and adds **positional encodings**.  
+   - Processes features through a **Transformer module**, combining:  
+     - **Self-Attention Layers**: For capturing global context.  
+     - **Cross-Attention Layers**: For position-aware descriptors.  
+
+3. **Matching Module**:  
+   - Uses a **differentiable matching layer** to compute a **confidence matrix**, identifying likely correspondences between the feature maps of two images.  
+   - Matches are selected based on:  
+     - **Mutual-Nearest-Neighbor Criteria**.  
+     - A **confidence threshold**.  
+   - This forms the initial set of **coarse-level matches**.  
+
+4. **Fine-Level Refinement Module**:  
+   - Crops a small window around each coarse match.  
+   - Refines these matches to produce **final matches with sub-pixel accuracy**.  
+
+---
+
+### Results  
+LoFTR was evaluated in both **indoor** and **outdoor** environments, outperforming existing methods:  
+
+- Compared to **SuperGlue** and **DRC-Net**, LoFTR produced:  
+  - **More correct matches**.  
+  - **Fewer mismatches**.  
+- Delivered **high-quality matches** in challenging areas, such as:  
+  - Texture-less walls.  
+  - Floors with repetitive patterns.  
+- Achieved **first-place rankings** on two public benchmarks for visual localization.  
+
+LoFTR’s results demonstrate its effectiveness in **real-world applications** and its reliability in addressing areas where traditional methods struggle.  
+
+---
+
+**Note**: Red lines represent epipolar line errors greater than \(5 \times 10^{-4}\).  
+
+
+
+## 3: Learning Super-Features for Image Retrieval
+
+---
+
+### Motivation  
+Traditional feature detection and matching methods, such as using **Convolutional Neural Network (CNN)** features, have significant limitations. Methods like the **Scale-Invariant Feature Transform (SIFT)** detect keypoints individually and compute descriptors around these separate, independent keypoints. This approach **ignores the spatial relationships** between keypoints, making the method:  
+- Sensitive to **viewpoint changes**.  
+- Sensitive to **lighting variations**.  
+
+Even modern deep learning methods, such as **CNN-based approaches**, fail to consider spatial relationships. However, clusters of keypoints often contain **rich contextual information**. For example, a cluster of keypoints around a **building edge** has a predictable structure that can be recognized.
+
+---
+
+### Techniques  
+To address these challenges and capture **Super-Features**, the paper introduces an **iterative Local Feature Integration Transformer**:  
+- This method adapts **pre-existing attention modules** for image retrieval tasks.  
+- During training, the loss is directly applied to **Super-Features**, and no additional labels or annotations are required beyond the image data itself.
+
+<div style='display: flex; flex-direction: column; justify-content: center'>
+    <img src="{{ '/assets/images/38/firetraining.png' | relative_url }}" alt="YOLO" style="height: 200px; max-width: 100%;"/>
+    <p style='text-align: center'><em>Figure x: The training process for the Local Feature Integration Transformer (FIT)[2]</em></p>
+</div>
+---
+
+### Architecture  
+The proposed framework follows a multi-step process to generate **Super-Features**:  
+
+1. **Feature Extraction Backbone**:  
+   - A backbone **CNN** extracts dense **feature maps** that encode **local patterns** and textures from the input image.
+
+2. **Super-Feature Extraction**:  
+   - The framework detects **salient regions** from the feature maps. These regions capture **spatial and geometric context** that is meaningful for retrieval.  
+
+3. **Context-Aware Processing**:  
+   - The framework uses **non-local attention mechanisms** to incorporate spatial relationships across the image.  
+   - These attention modules allow the model to focus on **non-adjacent regions** in the image, ensuring that features capture long-range dependencies.
+
+4. **Training Objective**:  
+   The network minimizes losses for both:  
+   - **Keypoint Detection**: Ensures that detected keypoints are repeatable across transformed images.  
+     - **Loss Function**: Cross-Entropy Loss.  
+   - **Descriptor Matching**: Ensures that corresponding keypoints in two images have similar descriptors.  
+     - **Loss Function**: Triplet Loss.  
+
+---
+
+### How It Works  
+1. **Input**: A reference image from the dataset and a query image are fed into the network.  
+2. **Feature Map Generation**: Dense feature maps are extracted using the backbone CNN.  
+3. **Keypoint and Descriptor Extraction**:  
+   - The framework detects keypoints and computes context-aware descriptors from the feature maps.  
+4. **Matching**: These context-rich features enable better comparison between images, resulting in more accurate **image retrieval**.
+
+---
+
+### Results  
+The paper evaluates the proposed method, **FIRe** (Feature Integration-based Retrieval), against state-of-the-art techniques. The network is trained on the **SfM-120k** dataset. Key results include:  
+
+- **Memory Efficiency**:  
+   - Other methods required a minimum of **7.9 GB** for the full R1M image set.  
+   - The FIRe method used only **6.4 GB**.  
+
+- **Accuracy Improvements**:  
+   - On the **ROxford + R1M hard sets**, FIRe achieved an improvement of **3.3 points**.  
+   - On the **RParis + R1M hard sets**, the improvement was as high as **12.2 points**.  
+
+These results demonstrate that FIRe outperforms existing methods both in terms of **accuracy** and **memory efficiency**.
+
+---
+
+
 
 ## Main Content
 Your survey stafdsafsdrts here. You can refer to the [source code](https://github.com/lilianweng/lil-log/tree/master/_posts) of [lil's blogs](https://lilianweng.github.io/lil-log/) for article structure ideas or Markdown syntax. We've provided a [sample post](https://ucladeepvision.github.io/CS188-Projects-2022Winter/2017/06/21/an-overview-of-deep-learning.html) from Lilian Weng and you can find the source code [here](https://raw.githubusercontent.com/UCLAdeepvision/CS188-Projects-2022Winter/main/_posts/2017-06-21-an-overview-of-deep-learning.md)

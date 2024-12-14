@@ -51,6 +51,7 @@ The top-\(k\) images with the highest similarity scores are returned as results,
         <img src="{{ '/assets/images/38/eiffel3.png' | relative_url }}" alt="YOLO" style="height: 200px; max-width: 100%;"/>
         <!-- <p><em>Fig 3. One of the results that may be retrieved as a result of the query image being used as input.</em></p> -->
     <!-- </div> -->
+    <br>
     <p><em>A query image on the left, along with two possible images retrieved on the right.</em></p>
 
 </div>
@@ -82,7 +83,7 @@ High-dimensional vectors (e.g., 512 or 1024 dimensions) are generated from inter
 ```
 <div style='display: flex; flex-direction: column; justify-content: center'>
     <img src="{{ '/assets/images/38/cnnfeature.png' | relative_url }}" alt="YOLO" style="width: 650px; max-width: 100%;"/>
-    <p style='text-align: center'><em>Figure x: Resnet18 Architecture. The orange arrow indicates where the feature vector is extracted from the network.</em></p>
+    <p style='text-align: center'><em>Resnet18 Architecture. The orange arrow indicates where the feature vector is extracted from the network. (image source: [1])</em></p>
 </div>
 ## 2: LoFTR: Detector-Free Local Feature Matching with Transformers
 
@@ -136,7 +137,7 @@ The LoFTR architecture comprises **four key components** to achieve robust local
 ---
 <div style='display: flex; flex-direction: column; justify-content: center'>
     <img src="{{ '/assets/images/38/article1image1.png' | relative_url }}" alt="YOLO" style="width: 500px; max-width: 100%;"/>
-    <p style='text-align: center'><em>Figure x: Framework [1]</em></p>
+    <p style='text-align: center'><em>Image of the LoFTR architecture(image source: [2])</em></p>
 </div>
 
 ### Results  
@@ -155,7 +156,7 @@ LoFTR’s results demonstrate its effectiveness in **real-world applications** a
 ---
 <div style='display: flex; flex-direction: column; justify-content: center'>
     <img src="{{ '/assets/images/38/article1image2.png' | relative_url }}" alt="YOLO" style="width: 500px; max-width: 100%;"/>
-    <p style='text-align: center'><em>Figure x: Results [1]</em></p>
+    <p style='text-align: center'><em>Results comparing LoTFR to other models (image source: [1])</em></p>
 </div>
 **Note**: Red lines represent epipolar line errors greater than \(5 \times 10^{-4}\).  
 
@@ -205,7 +206,7 @@ When we ran this code on a pair of desktop setup images taken from slightly diff
 
 ![LoFTR Matches]({{ '/assets/images/38/LoFTR-output.jpg' | relative_url }})
 {: style="width: 800px; max-width: 100%;"}
-*Fig 4. LoFTR matching points between two images of a desktop setup, showing 874 matches across various features including the laptop, monitor, and desk surface.*
+*LoFTR matching points between two images of a desktop setup, showing 874 matches across various features including the laptop, monitor, and desk surface.*
 
 The colored lines indicate matched points between the two images, with different colors representing the confidence levels of the matches. As we can see, LoFTR successfully identified corresponding points across various features in the scene, including:
 - The laptop screen and keyboard
@@ -239,11 +240,11 @@ To address these challenges and capture **Super-Features**, the paper introduces
 <div style='display: flex; justify-content: center'>
     <div style='display: flex; flex-direction: column; justify-content: end'>
         <img src="{{ '/assets/images/38/firetraining.png' | relative_url }}" alt="YOLO" style="width: 300px; max-width: 100%;"/>
-        <p style='text-align: center'><em>Figure x: The training process for the Local Feature Integration Transformer (FIT)[2]</em></p>
+        <p style='text-align: center'><em>Figure x: The training process for the Local Feature Integration Transformer (FIT)<br>(image source: [3])</em></p>
     </div>
     <div style='display: flex; flex-direction: column; justify-content: center'>
         <img src="{{ '/assets/images/38/lit.png' | relative_url }}" alt="YOLO" style="width: 300px; max-width: 100%;"/>
-        <p style='text-align: center'><em>Figure x: The training process for the Local Feature Integration Transformer (FIT)[2]</em></p>
+        <p style='text-align: center'><em>Figure x: The training process for the Local Feature Integration Transformer (FIT)<br>(image source: [3])</em></p>
     </div>
 
 </div>
@@ -297,36 +298,73 @@ These results demonstrate that FIRe outperforms existing methods both in terms o
 
 ---
 
+## 4: Improving Approximate Nearest Neighbor Search through Learned Adaptive Early Termination
 
+---
 
-## Main Content
-Your survey stafdsafsdrts here. You can refer to the [source code](https://github.com/lilianweng/lil-log/tree/master/_posts) of [lil's blogs](https://lilianweng.github.io/lil-log/) for article structure ideas or Markdown syntax. We've provided a [sample post](https://ucladeepvision.github.io/CS188-Projects-2022Winter/2017/06/21/an-overview-of-deep-learning.html) from Lilian Weng and you can find the source code [here](https://raw.githubusercontent.com/UCLAdeepvision/CS188-Projects-2022Winter/main/_posts/2017-06-21-an-overview-of-deep-learning.md)
+### Motivation  
+Efficient **approximate nearest neighbor (ANN) search** is essential for many applications, such as:
+- **Image search**
+- **Recommendation systems**
+- **Sequence matching**
 
-## Basic Syntax
-### Image
-Please create a folder with the name of your team id under /assets/images/, put all your images into the folder and reference the images in your main content.
+ANN search aims to balance **efficiency** and **accuracy**, but it often relies on **fixed configurations** applied to all queries, which can lead to **computational inefficiencies**. Some queries require significantly more effort to find the nearest neighbor, making the process inefficient.
 
-You can add an image to your survey like this:
-![YOLO]({{ '/assets/images/UCLAdeepvision/object_detection.png' | relative_url }})
-{: style="width: 400px; max-width: 100%;"}
-*Fig 1. YOLO: An object detection method in computer vision* [1].
+In this study, the researchers propose a **learned adaptive early termination method**. This method:
+- Predicts the **optimal stopping point** for each query.
+- Reduces **latency** without compromising **accuracy**.
 
-Please cite the image if it is taken from other people's work.
+---
 
+### Technique/Architecture  
+The architecture includes a Gradient Boosting Decision Tree (GBDT)-based regression model, using the LightGBM library, that outputs the predicted termination threshold for each query for three different indexes approaches (IVF, HNSW, IMI) with static and runtime features both combined as input to the model. This essentially learns and predicts when to stop searching for a certain query.
 
-### Table
-Here is an example for creating tables, including alignment syntax.
+<div style='display: flex; justify-content: center'>
+    <div style="flex: 1; min-width: 300px; max-width: 400px;">
+        <img src="{{ '/assets/images/38/article3index.png' | relative_url }}" alt="Desktop Setup View 2" style="width: 100%;"/>
+        <p style="text-align: center;"><em>Latency Results (image source: [4])</em></p>
+    </div>
+    <div style="flex: 1; min-width: 300px; max-width: 400px;">
+        <img src="{{ '/assets/images/38/article3index2.png' | relative_url }}" alt="Desktop Setup View 2" style="width: 100%;"/>
+        <p style="text-align: center;"><em>Distance between the query and its intermediate first neighbor for each index (image source: [4])</em></p>
+    </div>
+</div>
+---
 
-|             | column 1    |  column 2     |
-| :---        |    :----:   |          ---: |
-| row1        | Text        | Text          |
-| row2        | Text        | Text          |
+### Results  
+The proposed adaptive method outperformed static configurations in terms of **latency** at the same **recall levels** for both the **inverted file index (IVF)** and **hierarchical navigable small world graphs (HNSW)** indices.
+
+For applications targeting **95-100% recall-at-1** accuracy, without using vector compression, the method significantly reduced **end-to-end latency** across three million-scale datasets (DEEP10M, SIFT10M, GIST1M). 
+
+Key findings include:
+- **VF index**: Achieved up to a **58% reduction in latency** (equivalent to a **2.4x speedup**).
+- **HNSW index**: Achieved up to **86% reduction in latency** (equivalent to a **7.1x speedup**).
+
+---
+
+<div style='display: flex; justify-content: center'>
+    <div style="flex: 1; min-width: 300px; max-width: 400px;">
+        <img src="{{ '/assets/images/38/article3results.png' | relative_url }}" alt="Desktop Setup View 2" style="width: 100%;"/>
+        <p style="text-align: center;"><em>End-to-end latency results (image source: [4])</em></p>
+    </div>
+    <div style="flex: 1; min-width: 300px; max-width: 400px;">
+        <img src="{{ '/assets/images/38/article3results2.png' | relative_url }}" alt="Desktop Setup View 2" style="width: 100%;"/>
+        <p style="text-align: center;"><em>Latency Results (image source: [4])</em></p>
+    </div>
+</div>
+
 
 
 
 
 ## Reference
 
-[1] Redmon, Joseph, et al. "You only look once: Unified, real-time object detection." *Proceedings of the IEEE conference on computer vision and pattern recognition*. 2016.
-[1] Sun, Jiaming, et al. "LoFTR: Detector-Free Local Feature Matching With Transformers." *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 8922–8931. Read here.
+[1] Khuwaileh, M. "Extract a feature vector for any image with PyTorch." *Becoming Human: Artificial Intelligence Magazine*. 2019.
+
+[2] Sun, Jiaming, et al. "LoFTR: Detector-Free Local Feature Matching With Transformers." *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 2021.
+
+[3] Weinzaepfel, Philippe, et al. "Learning super-features for image retrieval." *Proceedings of the International Conference on Learning Representations (ICLR)*. 2022.
+
+[4] Li, Conglong, et al. "Big Learning: A Study of Multi-Task Learning Algorithms for Large-Scale Data." *Carnegie Mellon University, Parallel Data Laboratory*. 2016.
+
 ---

@@ -146,7 +146,65 @@ LoFTR’s results demonstrate its effectiveness in **real-world applications** a
 
 **Note**: Red lines represent epipolar line errors greater than \(5 \times 10^{-4}\).  
 
+Attached here is our codebase implementation in [Google Colab](https://colab.research.google.com/drive/1n5wQDbNSAakrK6i3ortlu9Cm78EA8lBN?usp=sharing).
 
+### Implementation and Results
+
+Let's demonstrate our implementation using two photos of a desktop setup taken from slightly different angles:
+
+<div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px;">
+    <div style="flex: 1; min-width: 300px; max-width: 400px;">
+        <img src="{{ '/assets/images/38/test1.jpeg' | relative_url }}" alt="Desktop Setup View 1" style="width: 100%;"/>
+        <p style="text-align: center;"><em>View 1 of the desktop setup</em></p>
+    </div>
+    <div style="flex: 1; min-width: 300px; max-width: 400px;">
+        <img src="{{ '/assets/images/38/test2.jpeg' | relative_url }}" alt="Desktop Setup View 2" style="width: 100%;"/>
+        <p style="text-align: center;"><em>View 2 of the desktop setup</em></p>
+    </div>
+</div>
+
+Here's the code to run LoFTR on these images:
+
+```python
+# Configure environment and download LoFTR code
+!pip install torch einops yacs kornia
+!git clone https://github.com/zju3dv/LoFTR --depth 1
+
+# Load and preprocess images
+img0_raw = cv2.imread(image_pair[0], cv2.IMREAD_GRAYSCALE)
+img1_raw = cv2.imread(image_pair[1], cv2.IMREAD_GRAYSCALE)
+img0_raw = cv2.resize(img0_raw, (640, 480))
+img1_raw = cv2.resize(img1_raw, (640, 480))
+
+img0 = torch.from_numpy(img0_raw)[None][None].cuda() / 255.
+img1 = torch.from_numpy(img1_raw)[None][None].cuda() / 255.
+batch = {'image0': img0, 'image1': img1}
+
+# Inference with LoFTR
+with torch.no_grad():
+    matcher(batch)
+    mkpts0 = batch['mkpts0_f'].cpu().numpy()
+    mkpts1 = batch['mkpts1_f'].cpu().numpy()
+    mconf = batch['mconf'].cpu().numpy()
+```
+
+When we ran this code on a pair of desktop setup images taken from slightly different angles, LoFTR was able to find 874 matching points between the images, demonstrating its robustness to viewpoint changes:
+
+![LoFTR Matches]({{ '/assets/images/38/LoFTR-output.jpg' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 4. LoFTR matching points between two images of a desktop setup, showing 874 matches across various features including the laptop, monitor, and desk surface.*
+
+The colored lines indicate matched points between the two images, with different colors representing the confidence levels of the matches. As we can see, LoFTR successfully identified corresponding points across various features in the scene, including:
+- The laptop screen and keyboard
+- The external monitor displaying a mountain scene
+- The desk surface and its reflections
+- The window blinds in the background
+
+This demonstrates LoFTR's ability to handle:
+1. Different viewing angles
+2. Varied lighting conditions
+3. Reflective surfaces
+4. Complex indoor environments with multiple objects
 
 ## 3: Learning Super-Features for Image Retrieval
 

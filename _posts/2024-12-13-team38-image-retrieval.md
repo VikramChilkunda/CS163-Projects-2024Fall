@@ -66,18 +66,24 @@ The top-\(k\) images with the highest similarity scores are returned as results,
 
 ---
 
-## Approaches to Image Retrieval
-CBIR systems utilize various strategies to identify similar images:
+## Approaches and Techniques to Image Retrieval
+CBIR systems utilize various strategies to identify similar images, but follow the same pattern of extracting a meaningful representation of an image into a high-dimensional vector, and then comparing this vector to other feature vectors of images:
 
 ## 1. Basic Feature Extraction with CNNs
-- **Process:** Convolutional Neural Networks (CNNs) extract deep features like edges, textures, shapes, and spatial patterns.
-- **Feature Vectors:** High-dimensional vectors (e.g., 512 or 1024 dimensions) are generated from intermediate CNN layers to represent an image.
-**Example Feature Vector from ResNet-18:**
+### Process
+The database of feature vectors is formed by sending training images through a  Convolutional Neural Networks (CNNs), which extracts deep features like edges, textures, shapes, and spatial patterns. However, we skip the last (fully connected) layer to obtain a high-dimensional vector containing rich information about the image. There are many methods of storing these feature vectors in a memory-efficient way, as storing tensors with thousands of elements can occupy excessive amounts of memory, often more than available. Some such methods include vector quantization or Principal Component Analysis (PCA), which both attempt to reduce the dimensionality of the vectors while still maintaining the rich meaning encoded within.
+
+When given a query image, we run it through the same CNN and obtain a feature vector describing the query image. Using one of several distance metrics, often cosine similarity or Euclidean distance, we find the top-<em>k</em> similar vectors, and return the associated images.
+### Feature Vectors
+High-dimensional vectors (e.g., 512 or 1024 dimensions) are generated from intermediate CNN layers to represent an image, and an example feature vector from ResNet-18 is shown below:
 ```python
 [0.45, -0.12, 0.34, ..., 0.89]  # Image 1 (dog)
 [0.47, -0.10, 0.31, ..., 0.87]  # Image 2 (dog)
 ```
-
+<div style='display: flex; flex-direction: column; justify-content: center'>
+    <img src="{{ '/assets/images/38/cnnfeature.png' | relative_url }}" alt="YOLO" style="width: 650px; max-width: 100%;"/>
+    <p style='text-align: center'><em>Figure x: Resnet18 Architecture. The orange arrow indicates where the feature vector is extracted from the network.</em></p>
+</div>
 ## 2: LoFTR: Detector-Free Local Feature Matching with Transformers
 
 ---
@@ -128,6 +134,10 @@ The LoFTR architecture comprises **four key components** to achieve robust local
    - Refines these matches to produce **final matches with sub-pixel accuracy**.  
 
 ---
+<div style='display: flex; flex-direction: column; justify-content: center'>
+    <img src="{{ '/assets/images/38/article1image1.png' | relative_url }}" alt="YOLO" style="width: 500px; max-width: 100%;"/>
+    <p style='text-align: center'><em>Figure x: Framework [1]</em></p>
+</div>
 
 ### Results  
 LoFTR was evaluated in both **indoor** and **outdoor** environments, outperforming existing methods:  
@@ -143,7 +153,10 @@ LoFTR was evaluated in both **indoor** and **outdoor** environments, outperformi
 LoFTR’s results demonstrate its effectiveness in **real-world applications** and its reliability in addressing areas where traditional methods struggle.  
 
 ---
-
+<div style='display: flex; flex-direction: column; justify-content: center'>
+    <img src="{{ '/assets/images/38/article1image2.png' | relative_url }}" alt="YOLO" style="width: 500px; max-width: 100%;"/>
+    <p style='text-align: center'><em>Figure x: Results [1]</em></p>
+</div>
 **Note**: Red lines represent epipolar line errors greater than \(5 \times 10^{-4}\).  
 
 
@@ -165,10 +178,16 @@ Even modern deep learning methods, such as **CNN-based approaches**, fail to con
 To address these challenges and capture **Super-Features**, the paper introduces an **iterative Local Feature Integration Transformer**:  
 - This method adapts **pre-existing attention modules** for image retrieval tasks.  
 - During training, the loss is directly applied to **Super-Features**, and no additional labels or annotations are required beyond the image data itself.
+<div style='display: flex; justify-content: center'>
+    <div style='display: flex; flex-direction: column; justify-content: end'>
+        <img src="{{ '/assets/images/38/firetraining.png' | relative_url }}" alt="YOLO" style="width: 300px; max-width: 100%;"/>
+        <p style='text-align: center'><em>Figure x: The training process for the Local Feature Integration Transformer (FIT)[2]</em></p>
+    </div>
+    <div style='display: flex; flex-direction: column; justify-content: center'>
+        <img src="{{ '/assets/images/38/lit.png' | relative_url }}" alt="YOLO" style="width: 300px; max-width: 100%;"/>
+        <p style='text-align: center'><em>Figure x: The training process for the Local Feature Integration Transformer (FIT)[2]</em></p>
+    </div>
 
-<div style='display: flex; flex-direction: column; justify-content: center'>
-    <img src="{{ '/assets/images/38/firetraining.png' | relative_url }}" alt="YOLO" style="height: 200px; max-width: 100%;"/>
-    <p style='text-align: center'><em>Figure x: The training process for the Local Feature Integration Transformer (FIT)[2]</em></p>
 </div>
 ---
 
@@ -211,8 +230,10 @@ The paper evaluates the proposed method, **FIRe** (Feature Integration-based Ret
    - The FIRe method used only **6.4 GB**.  
 
 - **Accuracy Improvements**:  
-   - On the **ROxford + R1M hard sets**, FIRe achieved an improvement of **3.3 points**.  
-   - On the **RParis + R1M hard sets**, the improvement was as high as **12.2 points**.  
+   - On the **R-Oxford + R-1M hard sets**, FIRe achieved an improvement of **3.3 points**.  
+   - On the **R-Paris + R-1M hard sets**, the improvement was as high as **12.2 points**.
+        - **R-Oxford** and **R-Paris** are datasets containing buildings from Oxford, England and Paris, France, respectively.
+        - **R-1M** is a distractor dataset that aims to emulate real image retrieval tasks by adding irrelevant images that do not belong to the same categories as the other datasets  
 
 These results demonstrate that FIRe outperforms existing methods both in terms of **accuracy** and **memory efficiency**.
 
@@ -245,29 +266,9 @@ Here is an example for creating tables, including alignment syntax.
 
 
 
-### Code Block
-```
-# This is a sample code block
-import torch
-print (torch.__version__)
-```
-
-
-### Formula
-Please use latex to generate formulas, such as:
-
-$$
-\tilde{\mathbf{z}}^{(t)}_i = \frac{\alpha \tilde{\mathbf{z}}^{(t-1)}_i + (1-\alpha) \mathbf{z}_i}{1-\alpha^t}
-$$
-
-or you can write in-text formula $$y = wx + b$$.
-
-### More Markdown Syntax
-You can find more Markdown syntax at [this page](https://www.markdownguide.org/basic-syntax/).
 
 ## Reference
-Please make sure to cite properly in your work, for example:
 
 [1] Redmon, Joseph, et al. "You only look once: Unified, real-time object detection." *Proceedings of the IEEE conference on computer vision and pattern recognition*. 2016.
-
+[1] Sun, Jiaming, et al. "LoFTR: Detector-Free Local Feature Matching With Transformers." *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 8922–8931. Read here.
 ---
